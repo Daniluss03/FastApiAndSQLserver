@@ -1,12 +1,17 @@
-import os
-from dotenv import load_dotenv
 import pyodbc
+from dotenv import load_dotenv
+import os
 
+# Cargar variables de entorno desde el archivo .env
 load_dotenv()
 
+# Configura los detalles de conexión
+server = os.getenv("DB_SERVER")
+database = os.getenv("DB_DATABASE")
+username = os.getenv("DB_USERNAME")
+password = os.getenv("DB_PASSWORD")
 
 
-print(f"Nombre del servidor cargado desde .env: {server}")
 # Crea la cadena de conexión
 conn_str = (
     f'DRIVER={{ODBC Driver 17 for SQL Server}};'

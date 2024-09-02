@@ -1,12 +1,16 @@
 import pyodbc
+from dotenv import load_dotenv
+import os
 
-
+# Cargar variables de entorno desde el archivo .env
+load_dotenv()
 
 # Configura los detalles de conexión
-server = ''
-database = ''
-username = ''
-password = ''
+server = os.getenv("DB_SERVER")
+database = os.getenv("DB_DATABASE")
+username = os.getenv("DB_USERNAME")
+password = os.getenv("DB_PASSWORD")
+
 
 # Crea la cadena de conexión
 conn_str = (
@@ -17,17 +21,19 @@ conn_str = (
     f'PWD={password}'
 )
 
-
-
 try:
     # Conéctate a la base de datos
     conn = pyodbc.connect(conn_str)
-    print(conn)
-    cursor = conn.cursor()
-    #ahora un query basico
-    c=cursor.execute("SELECT * FROM '' ")
     print("Conexión exitosa.")
-    print(c)
+    
+    cursor = conn.cursor()
+    # Ejecutar una consulta básica
+    cursor.execute("SELECT  top  10 *FROM SalidasDeMercancia")
+    rows = cursor.fetchall()
+    
+    for row in rows:
+        print(row)
+    
     conn.close()
 except Exception as e:
     print(f"Error al conectar: {e}")

@@ -3,10 +3,11 @@ from datetime import datetime
 
 class SalidaResponse(BaseModel):
     NoDocumento: str
-    FechaDeSalida: datetime
-    HoraDeSalida: str
-    TotalUtilidad: float
-    FechaDePedidoFactura: datetime
+    CodigoAlterno: str
+    DescripcionLarga: str
+    CantidadSalida:float
+    PrecioVenta: float
+    Fecha: datetime
 
     class Config:
         orm_mode = True

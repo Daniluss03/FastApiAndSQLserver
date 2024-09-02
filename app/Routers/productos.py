@@ -1,39 +1,63 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from app.database import get_connection
 from app.schemas.schemasproductos import SalidaResponse
+from fastapi.security import APIKeyHeader
+from dotenv import load_dotenv
+import os
+import pyodbc
+
+load_dotenv()
+
+API_KEY = os.getenv("API_KEY")
+api_key_header = APIKeyHeader(name="X-API-KEY")
+
+def verify_api(api_key: str = Depends(api_key_header)):
+    if api_key != API_KEY:
+        raise HTTPException(status_code=403, detail="Could not validate the API KEY")
+    return api_key
 
 router = APIRouter()
 
 @router.get("/Salidasmercancia", response_model=list[SalidaResponse])
-def get_salidas():
+async def get_salidas(api_key: str = Depends(verify_api,SalidaResponse.Fecha)):
     try:
-        # Establecer conexión
         conn = get_connection()
         cursor = conn.cursor()
-        # Ejecutar la consulta
         query = """
-         SELECT  top  10 *FROM $#@$#@$#@$@$@
+         SELECT TOP 10 * FROM SalidasDeMercancia
         """
         cursor.execute(query)
         rows = cursor.fetchall()
-        # Cerrar la conexión
         conn.close()
-        # Si no hay filas, lanzar una excepción
+
         if not rows:
             raise HTTPException(status_code=404, detail="No records found")
-        # Crear una lista de diccionarios a partir de los resultados
+
         results = [
             {
                 "NoDocumento": row.NoDocumento,
-                "FechaDeSalida": row.FechaDeSalida,
-                "HoraDeSalida": row.HoraDeSalida.strftime('%H:%M:%S'),  # Convertir a string
-                "TotalUtilidad": row.TotalUtilidad,
-                "FechaDePedidoFactura": row.FechaDePedidoFactura
+                "CodigoAlterno": row.CodigoAlterno,
+                "DescripcionLarga": row.DescripcionLarga,
+                "CantidadSalida": row.CantidadSalida,
+                "PrecioVenta": row.PrecioVenta,
+                "Fecha":row.Fecha.strft('%H:%M:%S'),
             }
             for row in rows
         ]
         return results
+    
+    except pyodbc.InterfaceError:
+        raise HTTPException(
+            status_code=500,
+            detail="Database connection error: Could not establish a connection to SQL Server. Check server address and configuration."
+        )
+    except pyodbc.DatabaseError:
+        raise HTTPException(
+            status_code=500,
+            detail="Database query error: An error occurred while querying the database. Check the query and database status."
+        )
     except Exception as e:
-        # Registrar el error y lanzar una excepción HTTP con detalles
-        print(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred: {e}"
+        )
